@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+from argparse import ArgumentParser
 from os import environ, path, makedirs, walk
 from re import sub
-from subprocess import Popen, check_output
+from subprocess import Popen
+from sys import exit
 from time import sleep
-from argparse import ArgumentParser
 
 def main():
 	args = parseArgs()

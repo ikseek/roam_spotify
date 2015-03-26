@@ -29,7 +29,7 @@ def parseArgs():
 	return parser.parse_args()
 
 def addCurrentUser(config, base):
-	login_info_keys = ['autologin.username', 'autologin.canonical_username', 'autologin.blob']
+	login_info_keys = ['autologin.username', 'autologin.blob', 'core.facebook_machine_id']
 	login_info = { key: config[key] for key in login_info_keys }
 	login_data_filename = sub(r'^"|"$', '', login_info['autologin.username'])
 	base[login_data_filename] = login_info
@@ -59,6 +59,7 @@ class SSHProxy:
 	def __init__(self, host, port):
 		self.host = host
 		self.port = port
+		self._process = None
 		self._process = Popen(['ssh', host, '-N', '-D', str(port)])
 
 	def kill(self):

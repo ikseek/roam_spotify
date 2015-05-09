@@ -2,8 +2,8 @@
 from argparse import ArgumentParser
 from os import environ, path, makedirs, walk
 from re import sub
-from subprocess import Popen
-from sys import exit
+from subprocess import Popen, PIPE, STDOUT
+from sys import exit, platform
 from time import sleep
 
 def main():
@@ -29,7 +29,7 @@ def parseArgs():
 	return parser.parse_args()
 
 def addCurrentUser(config, base):
-	login_info_keys = ['autologin.username', 'autologin.blob', 'core.facebook_machine_id']
+	login_info_keys = ['autologin.canonical_username', 'autologin.username', 'autologin.blob']
 	login_info = { key: config[key] for key in login_info_keys }
 	login_data_filename = sub(r'^"|"$', '', login_info['autologin.username'])
 	base[login_data_filename] = login_info
@@ -75,13 +75,13 @@ class SSHProxy:
 
 class Spotify:
 	def __init__(self):
-		spotydir = path.join(environ['APPDATA'], 'Spotify')
+		spotydir = _spotify_data_directory()
 		self.config = Config(path.join(spotydir, 'prefs'))
-		self._bin_file_path = path.join(spotydir, 'spotify.exe')
+		self._bin_file_path = _spotify_application()
 		self._process = None
 
 	def run(self):
-		self._process = Popen(self._bin_file_path)
+		self._process = Popen(self._bin_file_path, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
 	def kill(self):
 		self._process.kill()
@@ -134,6 +134,20 @@ class Userbase:
 	def items(self):
 		for key in self:
 			yield (key, self[key])
+
+def _spotify_data_directory():
+	if platform.startswith('win'):
+		return path.join(environ['APPDATA'], 'Spotify')
+	elif platform.startswith('darwin'):
+		spotypath = path.join('~', 'Library', 'Application Support', 'Spotify')
+		return path.expanduser(spotypath)
+
+def _spotify_application():
+	if platform.startswith('win'):
+		return path.join(_spotify_data_directory(), 'spotify.exe')
+	elif platform.startswith('darwin'):
+		return path.join('/', 'Applications', 'Spotify.app', 'Contents', 'MacOS', 'Spotify')
+
 
 if __name__ == '__main__':
 	try:

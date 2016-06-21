@@ -2,9 +2,8 @@
 from argparse import ArgumentParser
 from os import environ, path, makedirs, walk
 from re import sub
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
 from sys import exit, platform
-from time import sleep
 
 def main():
 	args = parseArgs()
@@ -52,7 +51,7 @@ def loginUser(spotify, login_data, wait_seconds):
 	spotify.config.update(login_data)
 	spotify.config.save()
 	spotify.run()
-	sleep(wait_seconds)
+	spotify.wait(wait_seconds)
 	spotify.kill()
 
 class SSHProxy:
@@ -82,6 +81,12 @@ class Spotify:
 
 	def run(self):
 		self._process = Popen(self._bin_file_path, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
+	def wait(self, timeout):
+		try:
+			return self._process.communicate(timeout=timeout)
+		except TimeoutExpired:
+			return None, None
 
 	def kill(self):
 		self._process.kill()
